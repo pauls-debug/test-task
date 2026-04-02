@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TaskFlow">
+<title>TaskFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#F5F4F0;--surface:#FFFFFF;--surface2:#F0EEE9;--surface3:#E8E5DE;
+  --text:#1A1916;--text2:#6B6860;--text3:#A09D96;
+  --accent:#2563EB;--accent-light:#EFF4FF;--accent-text:#1D4ED8;
+  --green:#16A34A;--green-light:#F0FDF4;--green-text:#15803D;
+  --red:#DC2626;--red-light:#FEF2F2;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.12);
+  --radius:14px;--radius-sm:8px;--radius-full:100px;
+  --font:'DM Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);}
+body{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;}
+
+/* ── Header ── */
+.header{background:var(--surface);border-bottom:0.5px solid var(--border);padding:20px 20px 14px;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.header-left h1{font-size:26px;font-weight:600;letter-spacing:-0.6px;line-height:1;}
+.header-left p{font-size:13px;color:var(--text3);margin-top:3px;}
+.header-actions{display:flex;gap:8px;}
+.btn-icon{width:38px;height:38px;border-radius:var(--radius-full);background:var(--surface2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0;}
+.btn-icon:active{background:var(--surface3);}
+.btn-icon svg{width:18px;height:18px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:0 12px;height:40px;}
+.search-bar svg{width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.search-input{border:none;background:transparent;font-family:var(--font);font-size:14px;color:var(--text);flex:1;outline:none;}
+.search-input::placeholder{color:var(--text3);}
+
+/* ── Screens ── */
+.screen{display:none;flex-direction:column;flex:1;}
+.screen.active{display:flex;}
+.scroll-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:90px;}
+
+/* ── Stats ── */
+.stats-row{display:flex;gap:10px;padding:16px 20px 0;}
+.stat-card{flex:1;background:var(--surface2);border-radius:12px;padding:12px 14px;}
+.stat-num{font-size:22px;font-weight:600;letter-spacing:-0.5px;}
+.stat-label{font-size:11px;color:var(--text2);margin-top:2px;}
+.stat-card.accent{background:var(--accent);}
+.stat-card.accent .stat-num,.stat-card.accent .stat-label{color:#fff;}
+.stat-card.accent .stat-label{opacity:0.75;}
+
+/* ── Sections ── */
+.section{padding:20px 20px 0;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);}
+.section-action{font-size:13px;color:var(--accent);font-weight:500;cursor:pointer;}
+
+/* ── Tasks ── */
+.task-list{display:flex;flex-direction:column;gap:2px;}
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--surface);border-radius:12px;border:0.5px solid var(--border);}
+.task-item.done{background:var(--surface2);border-color:transparent;}
+.task-item.done .task-text{text-decoration:line-through;color:var(--text3);}
+.checkbox{width:22px;height:22px;border-radius:7px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;margin-top:1px;}
+.checkbox.checked{background:var(--green);border-color:var(--green);}
+.checkbox svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity 0.15s;}
+.checkbox.checked svg{opacity:1;}
+.task-content{flex:1;min-width:0;}
+.task-text{font-size:15px;font-weight:400;line-height:1.4;color:var(--text);}
+.task-meta{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;}
+.tag{font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--radius-full);}
+.tag.work{background:#FEF3C7;color:#92400E;}
+.tag.personal{background:#EDE9FE;color:#5B21B6;}
+.tag.urgent{background:var(--red-light);color:var(--red);}
+.tag.health{background:var(--green-light);color:var(--green-text);}
+.tag.finance{background:#E0F2FE;color:#0369A1;}
+.reminder-badge{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text3);}
+.reminder-badge svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.priority-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:8px;}
+.delete-btn{background:none;border:none;cursor:pointer;padding:4px;opacity:0.3;flex-shrink:0;transition:opacity 0.15s;}
+.delete-btn:hover{opacity:0.7;}
+.delete-btn svg{width:14px;height:14px;stroke:var(--text);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.empty-state{padding:32px 0;text-align:center;color:var(--text3);font-size:14px;}
+
+/* ── Completed ── */
+.completed-section{padding:16px 20px 0;}
+.completed-header{display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 0;user-select:none;}
+.chevron{width:20px;height:20px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;transition:transform 0.25s;}
+.chevron svg{width:11px;height:11px;stroke:var(--text2);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.chevron.open{transform:rotate(180deg);}
+.completed-label{font-size:13px;font-weight:500;color:var(--text2);}
+.completed-count{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:var(--radius-full);}
+.done-task-list{display:none;flex-direction:column;gap:2px;}
+.done-task-list.open{display:flex;}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:80px;right:20px;width:56px;height:56px;border-radius:var(--radius-full);background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,99,235,0.4);transition:transform 0.15s;z-index:20;}
+.fab:active{transform:scale(0.94);}
+.fab svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ── Bottom nav ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:0.5px solid var(--border);display:flex;align-items:center;z-index:10;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 0;}
+.nav-icon svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke 0.15s;}
+.nav-label{font-size:10px;color:var(--text3);font-weight:500;transition:color 0.15s;}
+.nav-item.active .nav-icon svg{stroke:var(--accent);}
+.nav-item.active .nav-label{color:var(--accent);}
+
+/* ── Settings ── */
+.settings-scroll{flex:1;overflow-y:auto;padding:20px 20px 100px;}
+.settings-section{margin-bottom:24px;}
+.settings-section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:10px;}
+.settings-card{background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
+.settings-row{display:flex;flex-direction:column;padding:14px 16px;border-bottom:0.5px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;}
+.settings-row input{font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;outline:none;width:100%;transition:border 0.15s;}
+.settings-row input:focus{border-color:var(--accent);}
+.settings-row .hint{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;}
+.settings-row .hint a{color:var(--accent);}
+.btn-primary{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+.btn-primary:active{opacity:0.85;}
+.btn-secondary{width:100%;padding:12px;background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);border-radius:12px;font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:500;}
+.status-badge.connected{background:var(--green-light);color:var(--green-text);}
+.status-badge.disconnected{background:var(--surface2);color:var(--text2);}
+.status-dot{width:7px;height:7px;border-radius:50%;}
+.info-box{background:var(--accent-light);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;}
+.info-box p{font-size:13px;color:var(--accent-text);line-height:1.6;}
+.step-list{list-style:none;counter-reset:steps;margin-top:8px;}
+.step-list li{counter-increment:steps;display:flex;gap:10px;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.5;}
+.step-list li::before{content:counter(steps);width:20px;height:20px;min-width:20px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-top:1px;}
+.step-list a{color:var(--accent);}
+.toggle-row{flex-direction:row !important;align-items:center;justify-content:space-between;}
+.toggle-label div:first-child{font-size:14px;font-weight:500;}
+.toggle-label div:last-child{font-size:12px;color:var(--text3);margin-top:2px;}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:20px;padding-bottom:40px;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--surface3);border-radius:2px;margin:0 auto 20px;}
+.modal-title{font-size:18px;font-weight:600;letter-spacing:-0.4px;margin-bottom:20px;}
+.form-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);margin-bottom:6px;display:block;}
+.form-input{width:100%;font-family:var(--font);font-size:15px;color:var(--text);background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;outline:none;transition:border 0.15s;margin-bottom:14px;}
+.form-input:focus{border-color:var(--accent);}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.tag-pick{padding:6px 14px;border-radius:var(--radius-full);border:1.5px solid var(--border2);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;background:transparent;font-family:var(--font);color:var(--text2);}
+.tag-pick.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent-text);}
+.priority-row{display:flex;gap:8px;margin-bottom:14px;}
+.pri-pick{flex:1;padding:8px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s;background:transparent;font-family:var(--font);}
+.pri-pick[data-p="high"].selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+.pri-pick[data-p="medium"].selected{border-color:#F59E0B;background:#FFFBEB;color:#92400E;}
+.pri-pick[data-p="low"].selected{border-color:var(--text3);background:var(--surface2);color:var(--text2);}
+.btn-add{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;}
+.time-row{display:flex;gap:8px;margin-bottom:14px;}
+.time-input{flex:1;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;outline:none;}
+
+/* ── Toast ── */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.88);color:#fff;border-radius:14px;padding:10px 18px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header" id="mainHeader">
+  <div class="header-top">
+    <div class="header-left">
+      <h1 id="headerTitle">My Tasks</h1>
+      <p id="headerSub"></p>
+    </div>
+    <div class="header-actions" id="headerActions">
+      <button class="btn-icon" onclick="showToast('Filter by tag coming soon')">
+        <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      </button>
+      <button class="btn-icon" onclick="manualSync()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="search-bar" id="searchBarWrap">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" id="searchInput" placeholder="Search tasks…" oninput="renderAll()">
+  </div>
+</div>
+
+<!-- SCREEN: HOME -->
+<div class="screen active" id="homeScreen">
+  <div class="scroll-content">
+    <div class="stats-row">
+      <div class="stat-card accent"><div class="stat-num" id="statPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-num" id="statDoneToday">0</div><div class="stat-label">Done today</div></div>
+      <div class="stat-card"><div class="stat-num" id="statReminders">0</div><div class="stat-label">Reminders</div></div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Active</span>
+        <span class="section-action" onclick="openModal()">+ New task</span>
+      </div>
+      <div class="task-list" id="activeList"></div>
+    </div>
+    <div class="completed-section">
+      <div class="completed-header" onclick="toggleCompleted()">
+        <div class="chevron" id="chevron"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <span class="completed-label">Completed</span>
+        <span class="completed-count" id="statDone">0</span>
+      </div>
+      <div class="done-task-list" id="doneList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: SETTINGS -->
+<div class="screen" id="settingsScreen">
+  <div class="settings-scroll">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <span style="font-size:14px;font-weight:500;">GitHub status</span>
+      <span class="status-badge disconnected" id="ghStatusBadge">
+        <span class="status-dot"></span><span id="ghStatusText">Not connected</span>
+      </span>
+    </div>
+    <div class="info-box">
+      <p><strong>Connect in 3 steps:</strong></p>
+      <ul class="step-list">
+        <li>Go to <a href="https://github.com/new" target="_blank">github.com/new</a> → create a <strong>private</strong> repo called <code>taskflow-data</code>, tick "Add README".</li>
+        <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank">GitHub → Settings → Developer settings → Tokens (classic)</a> → tick <strong>repo</strong> → Generate & copy the token.</li>
+        <li>Fill in the fields below and tap <strong>Save & Test</strong>.</li>
+      </ul>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">GitHub credentials</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <label>Your GitHub username</label>
+          <input type="text" id="ghUsername" placeholder="e.g. paul-dupont" autocapitalize="none" autocorrect="off">
+        </div>
+        <div class="settings-row">
+          <label>Repository name</label>
+          <input type="text" id="ghRepo" placeholder="taskflow-data" autocapitalize="none" autocorrect="off">
+        </div>
+        <div class="settings-row">
+          <label>Personal Access Token</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocapitalize="none" autocomplete="off">
+          <span class="hint">Stored only on this device. Never shared.</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveAndTestGitHub()">Save & Test connection</button>
+    <button class="btn-secondary" onclick="manualSync()" style="margin-bottom:24px;">Sync now</button>
+    <div class="settings-section">
+      <div class="settings-section-title">Sync</div>
+      <div class="settings-card">
+        <div class="settings-row toggle-row">
+          <div class="toggle-label">
+            <div>Auto-sync on changes</div>
+            <div>Push to GitHub on every change</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:26px;">
+            <input type="checkbox" id="autoSyncToggle" style="opacity:0;width:0;height:0;" onchange="saveSettings()">
+            <span id="toggleTrack" style="position:absolute;cursor:pointer;inset:0;background:var(--surface3);border-radius:13px;transition:background 0.2s;"></span>
+            <span id="toggleThumb" style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">Data</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Clear all tasks</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Removes tasks from this device only. GitHub copy is kept.</div>
+          <button class="btn-secondary" style="color:var(--red);border-color:var(--red);background:var(--red-light);" onclick="clearAllTasks()">Clear all tasks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openModal()">
+  <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" id="navHome" onclick="showScreen('home')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <span class="nav-label">Home</span>
+  </div>
+  <div class="nav-item" onclick="showToast('Calendar coming soon')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <span class="nav-label">Calendar</span>
+  </div>
+  <div class="nav-item" onclick="manualSync()">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div>
+    <span class="nav-label">Sync</span>
+  </div>
+  <div class="nav-item" id="navSettings" onclick="showScreen('settings')">
+    <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06-.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+    <span class="nav-label">Settings</span>
+  </div>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New task</div>
+    <label class="form-label">Task</label>
+    <input class="form-input" id="taskInput" placeholder="What needs to be done?" onkeydown="if(event.key==='Enter')addTask()">
+    <label class="form-label">Tag</label>
+    <div class="tag-row">
+      <button class="tag-pick" data-tag="work" onclick="selectTag(this)">Work</button>
+      <button class="tag-pick" data-tag="personal" onclick="selectTag(this)">Personal</button>
+      <button class="tag-pick" data-tag="urgent" onclick="selectTag(this)">Urgent</button>
+      <button class="tag-pick" data-tag="health" onclick="selectTag(this)">Health</button>
+      <button class="tag-pick" data-tag="finance" onclick="selectTag(this)">Finance</button>
+    </div>
+    <label class="form-label">Priority</label>
+    <div class="priority-row">
+      <button class="pri-pick" data-p="high" onclick="selectPriority(this)">High</button>
+      <button class="pri-pick selected" data-p="medium" onclick="selectPriority(this)">Medium</button>
+      <button class="pri-pick" data-p="low" onclick="selectPriority(this)">Low</button>
+    </div>
+    <label class="form-label">Reminder (optional)</label>
+    <div class="time-row">
+      <input class="time-input" type="date" id="remindDate">
+      <input class="time-input" type="time" id="remindTime">
+    </div>
+    <button class="btn-add" onclick="addTask()">Add task</button>
+  </div>
+</div>
+
+<script>
+let tasks    = JSON.parse(localStorage.getItem('tf_tasks')    || '[]');
+let settings = JSON.parse(localStorage.getItem('tf_settings') || '{}');
+let selTag = '', selPri = 'medium', doneOpen = false;
+
+function saveTasks() { localStorage.setItem('tf_tasks', JSON.stringify(tasks)); }
+function saveSettings() {
+  settings.ghUsername = document.getElementById('ghUsername').value.trim();
+  settings.ghRepo     = document.getElementById('ghRepo').value.trim() || 'taskflow-data';
+  settings.ghToken    = document.getElementById('ghToken').value.trim();
+  settings.autoSync   = document.getElementById('autoSyncToggle').checked;
+  localStorage.setItem('tf_settings', JSON.stringify(settings));
+  updateToggleUI();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const fab = document.getElementById('fab');
+  if (name === 'home') {
+    document.getElementById('homeScreen').classList.add('active');
+    document.getElementById('navHome').classList.add('active');
+    document.getElementById('headerTitle').textContent = 'My Tasks';
+    document.getElementById('headerSub').textContent = '';
+    document.getElementById('headerActions').style.display = 'flex';
+    document.getElementById('searchBarWrap').style.display = 'flex';
+    fab.style.display = 'flex';
+  } else if (name === 'settings') {
+    document.getElementById('settingsScreen').classList.add('active');
+    document.getElementById('navSettings').classList.add('active');
+    document.getElementById('headerTitle').textContent = 'Settings';
+    document.getElementById('headerSub').textContent = 'GitHub sync & preferences';
+    document.getElementById('headerActions').style.display = 'none';
+    document.getElementById('searchBarWrap').style.display = 'none';
+    fab.style.display = 'none';
+    loadSettingsForm();
+  }
+}
+
+function loadSettingsForm() {
+  document.getElementById('ghUsername').value = settings.ghUsername || '';
+  document.getElementById('ghRepo').value     = settings.ghRepo     || 'taskflow-data';
+  document.getElementById('ghToken').value    = settings.ghToken    || '';
+  document.getElementById('autoSyncToggle').checked = settings.autoSync || false;
+  updateToggleUI(); updateGhStatus();
+}
+
+function updateToggleUI() {
+  const on = document.getElementById('autoSyncToggle').checked;
+  document.getElementById('toggleTrack').style.background = on ? 'var(--accent)' : 'var(--surface3)';
+  document.getElementById('toggleThumb').style.transform  = on ? 'translateX(18px)' : 'translateX(0)';
+}
+
+function updateGhStatus() {
+  const connected = !!(settings.ghToken && settings.ghUsername && settings.ghRepo);
+  const badge = document.getElementById('ghStatusBadge');
+  badge.className = 'status-badge ' + (connected ? 'connected' : 'disconnected');
+  badge.querySelector('.status-dot').style.background = connected ? 'var(--green)' : 'var(--text3)';
+  document.getElementById('ghStatusText').textContent = connected ? 'Connected' : 'Not connected';
+}
+
+async function saveAndTestGitHub() {
+  saveSettings();
+  if (!settings.ghToken || !settings.ghUsername || !settings.ghRepo) { showToast('Please fill in all three fields'); return; }
+  showToast('Testing connection…');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${settings.ghUsername}/${settings.ghRepo}`,
+      { headers: { Authorization: `token ${settings.ghToken}` } });
+    if      (res.status === 200) { updateGhStatus(); await pushToGitHub(); showToast('Connected & synced ✓'); }
+    else if (res.status === 401) { showToast('Token invalid — check and retry'); }
+    else if (res.status === 404) { showToast('Repo not found — check username & repo name'); }
+    else                         { showToast('Error ' + res.status); }
+  } catch(e) { showToast('Network error — are you online?'); }
+}
+
+async function pushToGitHub() {
+  if (!settings.ghToken || !settings.ghUsername || !settings.ghRepo) return;
+  const base = `https://api.github.com/repos/${settings.ghUsername}/${settings.ghRepo}/contents/tasks.json`;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(tasks, null, 2))));
+  let sha;
+  const getRes = await fetch(base, { headers: { Authorization: `token ${settings.ghToken}` } });
+  if (getRes.ok) { const d = await getRes.json(); sha = d.sha; }
+  const body = { message: 'sync: update tasks', content };
+  if (sha) body.sha = sha;
+  const putRes = await fetch(base, {
+    method: 'PUT',
+    headers: { Authorization: `token ${settings.ghToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!putRes.ok) throw new Error('Push failed');
+}
+
+async function loadFromGitHub() {
+  if (!settings.ghToken || !settings.ghUsername || !settings.ghRepo) return;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${settings.ghUsername}/${settings.ghRepo}/contents/tasks.json`,
+      { headers: { Authorization: `token ${settings.ghToken}` } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const remote = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+    if (Array.isArray(remote) && remote.length >= tasks.length) { tasks = remote; saveTasks(); }
+  } catch(e) { console.warn('GitHub load failed', e); }
+}
+
+async function manualSync() {
+  if (!settings.ghToken) { showToast('Set up GitHub in Settings first'); return; }
+  showToast('Syncing…');
+  try { await pushToGitHub(); showToast('Synced with GitHub ✓'); }
+  catch(e) { showToast('Sync failed — check settings'); }
+}
+
+async function autoSync() {
+  if (settings.autoSync && settings.ghToken) { try { await pushToGitHub(); } catch(e) {} }
+}
+
+function openModal() {
+  document.getElementById('modalBg').classList.add('open');
+  document.getElementById('remindDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('remindTime').value = '';
+  setTimeout(() => document.getElementById('taskInput').focus(), 300);
+}
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+  document.getElementById('taskInput').value = '';
+  selTag = ''; selPri = 'medium';
+  document.querySelectorAll('.tag-pick').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.pri-pick').forEach(b => { b.classList.remove('selected'); if(b.dataset.p==='medium') b.classList.add('selected'); });
+}
+function selectTag(el) {
+  document.querySelectorAll('.tag-pick').forEach(b => b.classList.remove('selected'));
+  if (selTag === el.dataset.tag) { selTag = ''; return; }
+  el.classList.add('selected'); selTag = el.dataset.tag;
+}
+function selectPriority(el) {
+  document.querySelectorAll('.pri-pick').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected'); selPri = el.dataset.p;
+}
+
+function addTask() {
+  const text = document.getElementById('taskInput').value.trim();
+  if (!text) return;
+  const rd = document.getElementById('remindDate').value;
+  const rt = document.getElementById('remindTime').value;
+  const reminder = (rd && rt) ? new Date(rd+'T'+rt).getTime() : null;
+  tasks.unshift({ id:Date.now(), text, tag:selTag, priority:selPri, done:false, reminder, createdAt:Date.now(), doneAt:null });
+  saveTasks(); renderAll(); closeModal(); showToast('Task added');
+  if (reminder) scheduleReminder(tasks[0]);
+  autoSync();
+}
+
+function toggleDone(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done; t.doneAt = t.done ? Date.now() : null;
+  saveTasks();
+  if (t.done && !doneOpen) openCompleted();
+  renderAll();
+  showToast(t.done ? 'Moved to Completed ✓' : 'Moved back to Active');
+  autoSync();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks(); renderAll(); showToast('Task deleted');
+  autoSync();
+}
+
+function clearAllTasks() {
+  if (!confirm('Delete all tasks from this device?')) return;
+  tasks = []; saveTasks(); renderAll(); showToast('All tasks cleared');
+}
+
+function renderAll() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const active = tasks.filter(t => !t.done && (!search || t.text.toLowerCase().includes(search)));
+  const done   = tasks.filter(t =>  t.done && (!search || t.text.toLowerCase().includes(search)));
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  document.getElementById('statPending').textContent   = tasks.filter(t => !t.done).length;
+  document.getElementById('statDoneToday').textContent = tasks.filter(t => t.done && t.doneAt && t.doneAt >= todayStart.getTime()).length;
+  document.getElementById('statReminders').textContent = tasks.filter(t => !t.done && t.reminder && t.reminder > Date.now()).length;
+  document.getElementById('statDone').textContent      = tasks.filter(t => t.done).length;
+  document.getElementById('activeList').innerHTML = active.length === 0
+    ? `<div class="empty-state">${search ? 'No tasks match.' : 'No active tasks — tap + to add one.'}</div>`
+    : active.map(t => taskCard(t, false)).join('');
+  document.getElementById('doneList').innerHTML = done.length === 0
+    ? `<div class="empty-state">Nothing completed yet.</div>`
+    : done.map(t => taskCard(t, true)).join('');
+}
+
+function taskCard(t, isDone) {
+  const pColor  = t.priority==='high' ? 'var(--red)' : t.priority==='medium' ? '#F59E0B' : 'var(--text3)';
+  const tagHTML = t.tag ? `<span class="tag ${t.tag}">${t.tag}</span>` : '';
+  let remHTML = '';
+  if (t.reminder) {
+    const d = new Date(t.reminder);
+    const overdue = t.reminder < Date.now() && !t.done;
+    remHTML = `<span class="reminder-badge"${overdue?' style="color:var(--red)"':''}>
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      ${d.toLocaleDateString('en',{month:'short',day:'numeric'})} ${d.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})}
+    </span>`;
+  }
+  const doneTime = isDone && t.doneAt
+    ? `<span style="font-size:11px;color:var(--text3)">Done ${new Date(t.doneAt).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})}</span>` : '';
+  return `<div class="task-item${isDone?' done':''}">
+    <div class="priority-dot" style="background:${pColor};margin-top:8px;"></div>
+    <div class="checkbox${isDone?' checked':''}" onclick="toggleDone(${t.id})">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="task-content">
+      <div class="task-text">${esc(t.text)}</div>
+      <div class="task-meta">${tagHTML}${remHTML}${doneTime}</div>
+    </div>
+    <button class="delete-btn" onclick="deleteTask(${t.id})">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>`;
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openCompleted() {
+  doneOpen = true;
+  document.getElementById('doneList').classList.add('open');
+  document.getElementById('chevron').classList.add('open');
+}
+function toggleCompleted() {
+  doneOpen = !doneOpen;
+  document.getElementById('doneList').classList.toggle('open', doneOpen);
+  document.getElementById('chevron').classList.toggle('open', doneOpen);
+}
+
+function scheduleReminder(task) {
+  const delay = task.reminder - Date.now();
+  if (delay <= 0) return;
+  setTimeout(() => {
+    showToast('Reminder: ' + task.text.substring(0,30) + '…');
+    if ('Notification' in window && Notification.permission==='granted')
+      new Notification('TaskFlow', { body: task.text });
+  }, delay);
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// Init
+if (tasks.length === 0) {
+  tasks = [
+    {id:1001,text:'Review Q2 portfolio rebalancing',tag:'finance',priority:'high',done:false,reminder:null,createdAt:Date.now()-3600000,doneAt:null},
+    {id:1002,text:'Book venue for summer 2030 wedding',tag:'personal',priority:'medium',done:false,reminder:Date.now()+86400000*2,createdAt:Date.now()-7200000,doneAt:null},
+    {id:1003,text:'Schedule pediatrician appointment',tag:'health',priority:'medium',done:false,reminder:null,createdAt:Date.now()-1800000,doneAt:null},
+    {id:1004,text:'Review Amundi MSCI Europe ETF performance',tag:'finance',priority:'low',done:false,reminder:null,createdAt:Date.now()-900000,doneAt:null},
+    {id:1005,text:'Send weekly project update',tag:'work',priority:'high',done:true,reminder:null,createdAt:Date.now()-86400000,doneAt:Date.now()-3600000},
+  ];
+  saveTasks();
+}
+
+renderAll();
+updateGhStatus();
+loadFromGitHub().then(renderAll);
+if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+tasks.filter(t => !t.done && t.reminder && t.reminder > Date.now()).forEach(scheduleReminder);
+</script>
+</body>
+</html>
